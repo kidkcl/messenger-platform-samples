@@ -87,10 +87,41 @@ app.post('/webhook', function (req, res) {
   if (data.object == 'page') {
     // Iterate over each entry
     // There may be multiple if batched
+    console.log(data.entry); 
     data.entry.forEach(function(pageEntry) {
       var pageID = pageEntry.id;
       var timeOfEvent = pageEntry.time;
-
+      
+      // Not the current thread owner
+      if(pageEntry.standby) {
+        pageEntry.standby.forEach(function(standbyEvent) {
+          if (standbyEvent.message && standbyEvent.message.text === '我問完了') {
+            request({
+              uri: 'https://graph.facebook.com/v2.6/me/take_thread_control',
+              qs: { access_token: PAGE_ACCESS_TOKEN },
+              method: 'POST',
+              json: {
+                recipient: {id: standbyEvent.sender.id},
+                metadata: 'hell no'
+              }
+              }, function (error, response, body) {
+              if (!error && response.statusCode == 200) {
+                if(body.success) {
+                  console.log('take success');
+                }
+                else {
+                  console.log('not take yet');
+                }
+              } else {
+                console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+              }
+            });
+          } else {
+            console.log("standby: \n", JSON.stringify(standbyEvent, null, 2));
+          }
+        });
+      }
+      else {
       // Iterate over each messaging event
       pageEntry.messaging.forEach(function(messagingEvent) {
         if (messagingEvent.optin) {
@@ -109,6 +140,7 @@ app.post('/webhook', function (req, res) {
           console.log("Webhook received unknown messagingEvent: ", messagingEvent);
         }
       });
+      }
     });
 
     // Assume all went well.
@@ -305,6 +337,10 @@ function receivedMessage(event) {
 
       case 'account linking':
         sendAccountLinking(senderID);
+        break;
+
+      case 'pass control':
+        sendPassControl(senderID);
         break;
 
       default:
@@ -793,6 +829,52 @@ function sendAccountLinking(recipientId) {
       }
     }
   };  
+
+  callSendAPI(messageData);
+}
+
+/*
+ * Pass control to secondary receivers
+ *
+ */
+function sendPassControl(recipientId) {
+  console.log(recipientId);
+  var targetApp = {
+    recipient: {
+      id: recipientId
+    },
+    target_app_id: '263902037430900',
+    metadata: "pass to Page Inbox"
+  }
+
+  request({
+    uri: 'https://graph.facebook.com/v2.6/me/pass_thread_control',
+    qs: { access_token: PAGE_ACCESS_TOKEN },
+    method: 'POST',
+    json: targetApp
+
+  }, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      if(body.success) {
+        console.log('pass success');
+      }
+      else {
+        console.log('not pass yet');
+      }
+    } else {
+      console.error("!!Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+    }
+  });
+
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      text: "已幫您轉接真人",
+      metadata: "DEVELOPER_DEFINED_METADATA"
+    }
+  };
 
   callSendAPI(messageData);
 }

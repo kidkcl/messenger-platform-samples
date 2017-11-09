@@ -1,6 +1,6 @@
 {
-    "appSecret": "",
-    "pageAccessToken": "",
-    "validationToken": "",
-    "serverURL": ""
+    "appSecret": "6eae1627f6b111498dba807b77f57c16",
+    "pageAccessToken": "EAAPZCy5VAB40BAFF6pZATDOk9MGBTF1eTZAWX0pDUsjkB6uqjYdxt72HdmKZB1AcI8l0QIpJx3ss1W2hn4mV9vD0o3BHSpp7aXsJRMmBQAZCpCrXdp6QCmHOpLoAz4FqIuvO1T72XxAxcyEopZCKhdMONRiBT3itVrwAynahxz0AZDZD",
+    "validationToken": "1qaz2wsx",
+    "serverURL": "https://bcc5c708.ngrok.io"
 }
